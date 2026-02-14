@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>你可以做我女朋友吗？</title>
+    <style>
+      :root {
+        --bg: #ffd6e7;
+        --card: rgba(255, 255, 255, 0.75);
+        --text: #8f1d4d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        color: var(--text);
+      }
+
+      .panel {
+        position: relative;
+        width: min(90vw, 680px);
+        min-height: 340px;
+        padding: 28px 24px 36px;
+        border-radius: 20px;
+        background: var(--card);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+        text-align: center;
+        overflow: hidden;
+      }
+
+      h1 {
+        margin: 14px 0 36px;
+        font-size: clamp(28px, 4vw, 42px);
+      }
+
+      .buttons {
+        position: relative;
+        width: 100%;
+        height: 170px;
+      }
+
+      button {
+        position: absolute;
+        width: 180px;
+        height: 76px;
+        border: none;
+        border-radius: 16px;
+        font-size: 34px;
+        font-weight: 700;
+        cursor: pointer;
+        user-select: none;
+        transition: transform 0.12s ease, opacity 0.3s ease;
+      }
+
+      #yesBtn {
+        left: calc(50% - 200px);
+        top: 42px;
+        background: #ff5d8f;
+        color: #fff;
+      }
+
+      #noBtn {
+        left: calc(50% + 20px);
+        top: 42px;
+        background: #fff;
+        color: #d3346d;
+        border: 3px solid #ff8bb0;
+      }
+
+      #yesBtn:hover,
+      #noBtn:hover {
+        transform: scale(1.03);
+      }
+
+      .rose {
+        margin-top: 18px;
+        font-size: 82px;
+        line-height: 1;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.25s ease;
+      }
+
+      .rose.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .slow {
+        position: absolute;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        font-size: 36px;
+        font-weight: 700;
+        color: #b20b48;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .slow.show {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="panel" id="panel">
+      <h1>你可以做我女朋友吗？</h1>
+      <section class="buttons" id="buttons">
+        <button id="yesBtn" type="button">可以</button>
+        <button id="noBtn" type="button">不可以</button>
+      </section>
+      <div class="rose" id="rose" aria-live="polite">🌹</div>
+      <div class="slow" id="slowMsg">太慢了</div>
+    </main>
+
+    <script>
+      const panel = document.getElementById("panel");
+      const yesBtn = document.getElementById("yesBtn");
+      const noBtn = document.getElementById("noBtn");
+      const rose = document.getElementById("rose");
+      const slowMsg = document.getElementById("slowMsg");
+
+      let phase = 1;
+      let timeoutStarted = false;
+      let tooSlowTimer;
+      let resetTimer;
+      let lastMouse = { x: panel.clientWidth / 2, y: panel.clientHeight / 2 };
+
+      const defaultPos = {
+        yes: { left: "calc(50% - 200px)", top: "42px" },
+        no: { left: "calc(50% + 20px)", top: "42px" },
+      };
+
+      function showRose() {
+        rose.classList.add("show");
+      }
+
+      function randomizeNoPosition() {
+        const maxX = panel.clientWidth - noBtn.offsetWidth - 10;
+        const maxY = panel.clientHeight - noBtn.offsetHeight - 12;
+        const x = Math.max(10, Math.random() * maxX);
+        const y = Math.max(70, Math.random() * maxY);
+        noBtn.style.left = `${x}px`;
+        noBtn.style.top = `${y}px`;
+      }
+
+      function startTooSlowCountdown() {
+        if (timeoutStarted) return;
+        timeoutStarted = true;
+
+        tooSlowTimer = setTimeout(() => {
+          slowMsg.classList.add("show");
+          resetTimer = setTimeout(() => {
+            slowMsg.classList.remove("show");
+            resetForNextRound();
+          }, 2000);
+        }, 5000);
+      }
+
+      function resetForNextRound() {
+        yesBtn.style.left = defaultPos.yes.left;
+        yesBtn.style.top = defaultPos.yes.top;
+        noBtn.style.left = defaultPos.no.left;
+        noBtn.style.top = defaultPos.no.top;
+        noBtn.style.opacity = "1";
+        noBtn.style.pointerEvents = "auto";
+        rose.classList.remove("show");
+        timeoutStarted = false;
+        clearTimeout(tooSlowTimer);
+        clearTimeout(resetTimer);
+        phase = 2;
+      }
+
+      yesBtn.addEventListener("click", showRose);
+
+      panel.addEventListener("mousemove", (event) => {
+        const rect = panel.getBoundingClientRect();
+        lastMouse = {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+        };
+      });
+
+      noBtn.addEventListener("mouseenter", () => {
+        if (phase === 1) {
+          startTooSlowCountdown();
+          randomizeNoPosition();
+          return;
+        }
+
+        noBtn.style.opacity = "0";
+        noBtn.style.pointerEvents = "none";
+
+        const yesX = Math.min(
+          panel.clientWidth - yesBtn.offsetWidth,
+          Math.max(0, lastMouse.x - yesBtn.offsetWidth / 2)
+        );
+        const yesY = Math.min(
+          panel.clientHeight - yesBtn.offsetHeight,
+          Math.max(0, lastMouse.y - yesBtn.offsetHeight / 2)
+        );
+
+        yesBtn.style.left = `${yesX}px`;
+        yesBtn.style.top = `${yesY}px`;
+      });
+
+      noBtn.addEventListener("mousemove", () => {
+        if (phase === 1) {
+          startTooSlowCountdown();
+          randomizeNoPosition();
+        }
+      });
+
+      noBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (phase === 1) {
+          startTooSlowCountdown();
+          randomizeNoPosition();
+        }
+      });
+    </script>
+  </body>
+</html>
