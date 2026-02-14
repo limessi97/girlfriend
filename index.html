@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>你可以做我女朋友吗？</title>
+    <title>喜欢狗蛋吗？</title>
     <style>
       :root {
         --bg: #ffd6e7;
@@ -23,38 +23,38 @@
         background: var(--bg);
         font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
         color: var(--text);
+        overflow: hidden;
       }
 
       .panel {
-        position: relative;
-        width: min(90vw, 680px);
-        min-height: 340px;
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
         padding: 28px 24px 36px;
-        border-radius: 20px;
-        background: var(--card);
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+        background: var(--bg);
         text-align: center;
         overflow: hidden;
       }
 
       h1 {
         margin: 14px 0 36px;
-        font-size: clamp(28px, 4vw, 42px);
+        font-size: clamp(36px, 5vw, 56px);
       }
 
       .buttons {
         position: relative;
         width: 100%;
-        height: 170px;
+        height: 220px;
       }
 
       button {
         position: absolute;
-        width: 180px;
-        height: 76px;
+        width: 200px;
+        height: 86px;
         border: none;
-        border-radius: 16px;
-        font-size: 34px;
+        border-radius: 18px;
+        font-size: 38px;
         font-weight: 700;
         cursor: pointer;
         user-select: none;
@@ -62,15 +62,15 @@
       }
 
       #yesBtn {
-        left: calc(50% - 200px);
-        top: 42px;
+        left: calc(50% - 220px);
+        top: 60px;
         background: #ff5d8f;
         color: #fff;
       }
 
       #noBtn {
         left: calc(50% + 20px);
-        top: 42px;
+        top: 60px;
         background: #fff;
         color: #d3346d;
         border: 3px solid #ff8bb0;
@@ -82,8 +82,8 @@
       }
 
       .rose {
-        margin-top: 18px;
-        font-size: 82px;
+        margin-top: 30px;
+        font-size: 94px;
         line-height: 1;
         opacity: 0;
         transform: translateY(10px);
@@ -95,61 +95,109 @@
         transform: translateY(0);
       }
 
-      .slow {
-        position: absolute;
-        left: 50%;
-        bottom: 18px;
-        transform: translateX(-50%);
-        font-size: 36px;
-        font-weight: 700;
+      .slow-overlay {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
         color: #b20b48;
-        opacity: 0;
-        pointer-events: none;
+        font-weight: 800;
+        font-size: min(18vw, 220px);
+        white-space: nowrap;
+        z-index: 20;
       }
 
-      .slow.show {
-        opacity: 1;
+      .slow-overlay.show {
+        display: flex;
+      }
+
+      .rain {
+        position: fixed;
+        top: -10vh;
+        font-size: 34px;
+        pointer-events: none;
+        z-index: 12;
+        animation: fall linear forwards;
+      }
+
+      @keyframes fall {
+        from {
+          transform: translateY(0) rotate(0deg);
+          opacity: 1;
+        }
+        to {
+          transform: translateY(120vh) rotate(180deg);
+          opacity: 0.8;
+        }
       }
     </style>
   </head>
   <body>
     <main class="panel" id="panel">
-      <h1>你可以做我女朋友吗？</h1>
+      <h1 id="title">喜欢狗蛋吗？</h1>
       <section class="buttons" id="buttons">
-        <button id="yesBtn" type="button">可以</button>
-        <button id="noBtn" type="button">不可以</button>
+        <button id="yesBtn" type="button">喜欢</button>
+        <button id="noBtn" type="button">不喜欢</button>
       </section>
       <div class="rose" id="rose" aria-live="polite">🌹</div>
-      <div class="slow" id="slowMsg">太慢了</div>
     </main>
+
+    <div class="slow-overlay" id="slowOverlay">太慢啦！！</div>
 
     <script>
       const panel = document.getElementById("panel");
+      const title = document.getElementById("title");
       const yesBtn = document.getElementById("yesBtn");
       const noBtn = document.getElementById("noBtn");
       const rose = document.getElementById("rose");
-      const slowMsg = document.getElementById("slowMsg");
+      const slowOverlay = document.getElementById("slowOverlay");
 
       let phase = 1;
       let timeoutStarted = false;
       let tooSlowTimer;
       let resetTimer;
-      let lastMouse = { x: panel.clientWidth / 2, y: panel.clientHeight / 2 };
+      let rainTimer;
+      let lastMouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
       const defaultPos = {
-        yes: { left: "calc(50% - 200px)", top: "42px" },
-        no: { left: "calc(50% + 20px)", top: "42px" },
+        yes: { left: "calc(50% - 220px)", top: "60px" },
+        no: { left: "calc(50% + 20px)", top: "60px" },
       };
+
+      function createRoseRain() {
+        const drop = document.createElement("span");
+        drop.className = "rain";
+        drop.textContent = "🌹";
+        const size = 24 + Math.random() * 32;
+        const duration = 2.2 + Math.random() * 2.3;
+        drop.style.left = `${Math.random() * 100}vw`;
+        drop.style.fontSize = `${size}px`;
+        drop.style.animationDuration = `${duration}s`;
+        document.body.appendChild(drop);
+        setTimeout(() => drop.remove(), duration * 1000 + 300);
+      }
+
+      function startRoseRain() {
+        clearInterval(rainTimer);
+        for (let i = 0; i < 14; i += 1) {
+          setTimeout(createRoseRain, i * 90);
+        }
+        rainTimer = setInterval(createRoseRain, 130);
+        setTimeout(() => clearInterval(rainTimer), 3200);
+      }
 
       function showRose() {
         rose.classList.add("show");
+        startRoseRain();
       }
 
       function randomizeNoPosition() {
-        const maxX = panel.clientWidth - noBtn.offsetWidth - 10;
-        const maxY = panel.clientHeight - noBtn.offsetHeight - 12;
+        const maxX = window.innerWidth - noBtn.offsetWidth - 10;
+        const maxY = window.innerHeight - noBtn.offsetHeight - 10;
         const x = Math.max(10, Math.random() * maxX);
-        const y = Math.max(70, Math.random() * maxY);
+        const y = Math.max(10, Math.random() * maxY);
         noBtn.style.left = `${x}px`;
         noBtn.style.top = `${y}px`;
       }
@@ -159,15 +207,20 @@
         timeoutStarted = true;
 
         tooSlowTimer = setTimeout(() => {
-          slowMsg.classList.add("show");
+          panel.style.visibility = "hidden";
+          slowOverlay.classList.add("show");
           resetTimer = setTimeout(() => {
-            slowMsg.classList.remove("show");
+            slowOverlay.classList.remove("show");
+            panel.style.visibility = "visible";
             resetForNextRound();
           }, 2000);
         }, 5000);
       }
 
       function resetForNextRound() {
+        title.textContent = "喜欢狗蛋吗？";
+        yesBtn.textContent = "喜欢";
+        noBtn.textContent = "不喜欢";
         yesBtn.style.left = defaultPos.yes.left;
         yesBtn.style.top = defaultPos.yes.top;
         noBtn.style.left = defaultPos.no.left;
@@ -183,12 +236,8 @@
 
       yesBtn.addEventListener("click", showRose);
 
-      panel.addEventListener("mousemove", (event) => {
-        const rect = panel.getBoundingClientRect();
-        lastMouse = {
-          x: event.clientX - rect.left,
-          y: event.clientY - rect.top,
-        };
+      window.addEventListener("mousemove", (event) => {
+        lastMouse = { x: event.clientX, y: event.clientY };
       });
 
       noBtn.addEventListener("mouseenter", () => {
@@ -202,11 +251,11 @@
         noBtn.style.pointerEvents = "none";
 
         const yesX = Math.min(
-          panel.clientWidth - yesBtn.offsetWidth,
+          window.innerWidth - yesBtn.offsetWidth,
           Math.max(0, lastMouse.x - yesBtn.offsetWidth / 2)
         );
         const yesY = Math.min(
-          panel.clientHeight - yesBtn.offsetHeight,
+          window.innerHeight - yesBtn.offsetHeight,
           Math.max(0, lastMouse.y - yesBtn.offsetHeight / 2)
         );
 
